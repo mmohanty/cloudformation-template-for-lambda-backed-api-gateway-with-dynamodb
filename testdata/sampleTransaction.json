@@ -1,0 +1,14 @@
+{
+  "cardNumber": "b816a29b50bc7437cbf7d5ad3bb3d8ed",
+  "transactionDate": "2016-9-14",
+  "transactionDetl": {
+    "merchantId": "TE",
+    "startDate": "2016-9-14",
+    "transactionAmount": "879e492a2e033680e3b842ae462afdc7cab9064a33da8baaa7636fd59db5bf0cea70558732148736d2eb120416857fab",
+    "transactionCode": "123",
+    "transactionDate": "2016-9-14",
+    "transactionDescription": "Shopping",
+    "transactionType": "Credit"
+  },
+  "transactionReference": "TT1"
+}
