@@ -1,0 +1,83 @@
+{  "AWSTemplateFormatVersion" : "2010-09-09",
+    "Transform": "AWS::Serverless-2016-10-31",
+    "Description": "Creates Lambda function and kinesis stream. Template Version 2.2.0",
+    "Parameters": {
+      "APIName": {
+       "Description": "CardTransactionEvent",
+         "Type": "String",
+         "AllowedPattern": "[A-Za-z0-9]*",
+         "MinLength": "4",
+         "MaxLength": "2048",
+         "ConstraintDescription": "must contain only alphanumeric characters (at least four)",
+         "Default":"CardTransactionHistory"
+      },
+      "LambdaCodeBucket": {
+         "Description": "artifact-manas",
+         "Type": "String",
+         "Default":"artifact-manas"
+      },
+      "LambdaCodePath": {
+         "Description": "handler/Archive.zip",
+         "Type": "String",
+         "Default": "handler/Archive.zip"
+      }
+   },
+    "Resources" : {
+      "CardTransactionHistoryStream": {
+      "Type": "AWS::Kinesis::Stream",
+      "Properties": {
+        "Name": "CardTransactionHistoryStream",
+        "RetentionPeriodHours" : 168,
+        "ShardCount": 6,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "Development"
+          }
+       ]
+      }
+    },
+    "CardTransactionEventLambda": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "CardTransactionEvent.handler",
+        "Role": { "Fn::GetAtt": ["KinesisExecutionRole", "Arn"]},
+        "CodeUri": "./../handler",
+        "Runtime": "nodejs6.10"
+      }
+    },
+    "CardTransactionStreamEventSource": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "CardTransactionEventLambda"
+        },
+        "Enabled": true,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "CardTransactionHistoryStream",
+            "Arn"
+          ]
+        },
+        "StartingPosition": "TRIM_HORIZON"
+      }
+    },
+    "KinesisExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": ["lambda.amazonaws.com"] },
+            "Action": ["sts:AssumeRole"]
+          }]
+        },
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/AWSLambdaFullAccess",
+                              "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+                              "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole",
+                              "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"]
+      }
+    }
+  }
+}

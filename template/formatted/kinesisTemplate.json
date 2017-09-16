@@ -1,0 +1,69 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates Lambda function and kinesis stream. Template Version 2.2.0
+Parameters:
+  APIName:
+    AllowedPattern: '[A-Za-z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters (at least four)
+    Default: CardTransactionHistory
+    Description: CardTransactionEvent
+    MaxLength: '2048'
+    MinLength: '4'
+    Type: String
+  LambdaCodeBucket:
+    Default: artifact-manas
+    Description: artifact-manas
+    Type: String
+  LambdaCodePath:
+    Default: handler/Archive.zip
+    Description: handler/Archive.zip
+    Type: String
+Resources:
+  CardTransactionEventLambda:
+    Properties:
+      CodeUri: s3://artifact-manas/18753f9e51bfc807fc12e1bdcbce3ef2
+      Handler: CardTransactionEvent.handler
+      Role:
+        Fn::GetAtt:
+        - KinesisExecutionRole
+        - Arn
+      Runtime: nodejs6.10
+    Type: AWS::Serverless::Function
+  CardTransactionHistoryStream:
+    Properties:
+      Name: CardTransactionHistoryStream
+      RetentionPeriodHours: 168
+      ShardCount: 6
+      Tags:
+      - Key: Environment
+        Value: Development
+    Type: AWS::Kinesis::Stream
+  CardTransactionStreamEventSource:
+    Properties:
+      Enabled: true
+      EventSourceArn:
+        Fn::GetAtt:
+        - CardTransactionHistoryStream
+        - Arn
+      FunctionName:
+        Ref: CardTransactionEventLambda
+      StartingPosition: TRIM_HORIZON
+    Type: AWS::Lambda::EventSourceMapping
+  KinesisExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AWSLambdaFullAccess
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole
+      - arn:aws:iam::aws:policy/AmazonKinesisFullAccess
+    Type: AWS::IAM::Role
+Transform: AWS::Serverless-2016-10-31

@@ -1,0 +1,177 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates Lambda function, API Gateway and CustomResource CloudFormation
+  handler. Template Version 2.2.0
+Parameters:
+  APIDescription:
+    Default: No description provided. Provide 'APIDescription' param to override this.
+    Description: Gets card transaction history.
+    Type: String
+  APIName:
+    AllowedPattern: '[A-Za-z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters (at least four)
+    Default: CardTransactionHistory
+    Description: CardTransactionHistory
+    MaxLength: '2048'
+    MinLength: '4'
+    Type: String
+  APIPath:
+    AllowedPattern: '[A-Za-z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters (1-64 chars)
+    Default: cardTransactionHistory
+    Description: cardTransactionHistory
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+  APIStageName:
+    AllowedPattern: '[A-Za-z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters (1-64 chars)
+    Default: dev
+    Description: dev
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+  DynamoReadCapacityUnits:
+    ConstraintDescription: must be between 1 and 10000
+    Default: '1'
+    Description: '1'
+    MaxValue: '10000'
+    MinValue: '1'
+    Type: Number
+  DynamoWriteCapacityUnits:
+    ConstraintDescription: must be between 1 and 10000
+    Default: '1'
+    Description: '1'
+    MaxValue: '10000'
+    MinValue: '1'
+    Type: Number
+  LambdaCodeBucket:
+    Default: artifact-manas
+    Description: artifact-manas
+    Type: String
+  LambdaCodePath:
+    Default: handler/Archive.zip
+    Description: handler/Archive.zip
+    Type: String
+Resources:
+  ApiDeployment:
+    DependsOn:
+    - CardTransactionHistoryAPIMethodGet
+    Properties:
+      RestApiId:
+        Ref: CardTransactionHistoryAPI
+      StageName: dev
+    Type: AWS::ApiGateway::Deployment
+  CardTransactionHistoryAPI:
+    Properties:
+      Description: Credit Card transation history.
+      FailOnWarnings: false
+      Name:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - Ref: APIName
+    Type: AWS::ApiGateway::RestApi
+  CardTransactionHistoryAPIMethodGet:
+    DependsOn: LambdaPermission
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+        - StatusCode: 200
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates:
+          application/json:
+            Fn::Join:
+            - ''
+            - - '{'
+              - '  "cardNumber": "$input.params(''cardNumber'')",'
+              - '  "startDate": "$input.params(''startDate'')",'
+              - '  "endDate": "$input.params(''endDate'')"'
+              - '}'
+        Type: AWS
+        Uri:
+          Fn::Join:
+          - ''
+          - - 'arn:aws:apigateway:'
+            - Ref: AWS::Region
+            - :lambda:path/2015-03-31/functions/
+            - Fn::GetAtt:
+              - CardTransactionHistoryFn
+              - Arn
+            - /invocations
+      MethodResponses:
+      - StatusCode: 200
+      RequestParameters:
+        method.request.querystring.cardNumber: true
+        method.request.querystring.endDate: true
+        method.request.querystring.startDate: true
+      ResourceId:
+        Ref: CardTransactionHistoryAPIResource
+      RestApiId:
+        Ref: CardTransactionHistoryAPI
+    Type: AWS::ApiGateway::Method
+  CardTransactionHistoryAPIResource:
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+        - CardTransactionHistoryAPI
+        - RootResourceId
+      PathPart:
+        Ref: APIPath
+      RestApiId:
+        Ref: CardTransactionHistoryAPI
+    Type: AWS::ApiGateway::Resource
+  CardTransactionHistoryFn:
+    Properties:
+      CodeUri: s3://artifact-manas/18753f9e51bfc807fc12e1bdcbce3ef2
+      FunctionName:
+        Fn::Join:
+        - '-'
+        - - Ref: AWS::StackName
+          - Ref: APIName
+      Handler: CardTransactionHistory.handler
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+      Runtime: nodejs6.10
+    Type: AWS::Serverless::Function
+  LambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AWSLambdaFullAccess
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole
+    Type: AWS::IAM::Role
+  LambdaPermission:
+    Properties:
+      Action: lambda:invokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - CardTransactionHistoryFn
+        - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+        - ''
+        - - 'arn:aws:execute-api:'
+          - Ref: AWS::Region
+          - ':'
+          - Ref: AWS::AccountId
+          - ':'
+          - Ref: CardTransactionHistoryAPI
+          - /*
+    Type: AWS::Lambda::Permission
+Transform: AWS::Serverless-2016-10-31

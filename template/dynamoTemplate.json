@@ -1,0 +1,59 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "Creates DynamoDB. Template Version 2.2.0",
+  "Resources" : {
+    "CardTransactionHistoryTable" : {
+      "Type" : "AWS::DynamoDB::Table",
+      "Properties" : {
+        "AttributeDefinitions" : [
+          {
+            "AttributeName" : "transactionReference",
+            "AttributeType" : "S"
+          },
+          {
+            "AttributeName" : "cardNumber",
+            "AttributeType" : "S"
+          },
+          {
+            "AttributeName" : "transactionDate",
+            "AttributeType" : "S"
+          }
+        ],
+        "KeySchema" : [
+          {
+            "AttributeName" : "transactionReference",
+            "KeyType" : "HASH"
+          }
+        ],
+        "ProvisionedThroughput" : {
+          "ReadCapacityUnits" : "5",
+          "WriteCapacityUnits" : "5"
+        },
+        "TableName" : "CardTransactionHistoryTable",
+        "GlobalSecondaryIndexes" : [
+              {
+                "IndexName" : "cardNumber-transactionDate-index",
+                "KeySchema" : [
+                  {
+                    "AttributeName" : "cardNumber",
+                    "KeyType" : "HASH"
+                  },
+                  {
+                    "AttributeName" : "transactionDate",
+                    "KeyType" : "RANGE"
+                  }
+                ],
+                "Projection" : {
+                  "ProjectionType" : "ALL"
+                },
+                "ProvisionedThroughput" : {
+                  "ReadCapacityUnits" : "5",
+                  "WriteCapacityUnits" : "5"
+                }
+            }
+        ]
+      }
+    }
+  }
+}
