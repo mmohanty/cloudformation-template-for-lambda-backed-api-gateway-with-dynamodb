@@ -102,8 +102,7 @@
          "Type": "AWS::ApiGateway::RestApi",
          "Properties": {
             "Name": { "Fn::Join": [ "-", [ { "Ref": "AWS::StackName" }, { "Ref": "APIName" } ] ] },
-            "Description": "Credit Card transation history.",
-            "FailOnWarnings":false
+            "Description": "Credit Card transation history."
          }
       },
       "CardTransactionHistoryAPIResource": {
