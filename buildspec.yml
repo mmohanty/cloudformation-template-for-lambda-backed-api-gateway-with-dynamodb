@@ -2,10 +2,9 @@ version: 0.1
 phases:
   install:
     commands:
-      - npm install time
-      - aws cloudformation package --template ./template/apiTemplate.json --s3-bucket artifact-manas
-                                   --output json > NewSamTemplate.yaml
+      - aws cloudformation package --template-file ./template/apiTemplate.json --s3-bucket artifact-manas
+                                   --output-template-file NewSamTemplate.json
 artifacts:
   type: zip
   files:
-    - NewSamTemplate.yaml
+    - NewSamTemplate.json
