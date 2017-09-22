@@ -2,6 +2,7 @@ version: 0.1
 phases:
   install:
     commands:
+      - aws --version
       - aws cloudformation package --template-file ./template/apiTemplate.json --s3-bucket artifact-manas
                                    --output-template-file NewSamTemplate.json
 artifacts:
