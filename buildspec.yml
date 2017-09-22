@@ -3,8 +3,6 @@ phases:
   install:
     commands:
       - aws --version
-      - sudo pip install awscli --upgrade --user
-      - aws --version
       - aws cloudformation package --template-file ./template/apiTemplate.json --s3-bucket artifact-manas
                                    --output-template-file NewSamTemplate.json
 artifacts:
