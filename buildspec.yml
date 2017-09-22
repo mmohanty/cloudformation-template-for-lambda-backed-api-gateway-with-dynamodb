@@ -2,7 +2,7 @@ version: 0.1
 phases:
   install:
     commands:
-      - sudo pip install awscli
+      - sudo pip install --upgrade awscli
   build:
     commands:
       - aws --version
