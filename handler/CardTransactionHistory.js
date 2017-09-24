@@ -3,6 +3,8 @@
 var AWS = require('aws-sdk');
 var DOC = require('dynamodb-doc');
 var crypto = require('crypto');
+const kms = require('./aws/kms.js')
+
 var docClient = new AWS.DynamoDB.DocumentClient();
 
 var encryption_key = "Ahch,eejaiPhoh3.Air3naiNgoh;4yooZushei-9okee4iox#a$h2Dee";
@@ -27,12 +29,12 @@ exports.handler = function(event, context) {
          ":cardnumber":encrypted
     }
   };
-
+//callback method
   var callback = function(err, data) {
     if (err) {
       console.log('error on getCreditCardTransationInfo: ', err);
       context.done('Unable to retrieve credit card transaction information', null);
-    } else {
+    }else {
          if(data.Items) {
             var txList = [];
             data.Items.forEach(function(item) {
